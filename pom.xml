@@ -6,6 +6,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>dancesportVideo</module>
+        <module>benchmark</module>
     </modules>
     <dependencyManagement>
         <dependencies>

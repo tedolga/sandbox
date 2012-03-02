@@ -1,5 +1,6 @@
 package benchmark;
 
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -7,22 +8,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @version 1.0
  */
 public class ConcurrentResource implements Resource {
-    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public void read() {
+    public void read(Long readTime) {
         lock.readLock().lock();
         try {
-            Thread.sleep(10000);
+            Thread.sleep(readTime);
         } catch (InterruptedException ignored) {
 
         }
         lock.readLock().unlock();
     }
 
-    public void write() {
+    public void write(Long writeTime) {
         lock.writeLock().lock();
         try {
-            Thread.sleep(10000);
+            Thread.sleep(writeTime);
         } catch (InterruptedException ignored) {
 
         }

@@ -6,8 +6,8 @@ package benchmark;
  */
 public interface Resource {
 
-    public void read();
+    public void read(Long readTime) throws InterruptedException;
 
-    public void write();
+    public void write(Long writeTime) throws InterruptedException;
 
 }

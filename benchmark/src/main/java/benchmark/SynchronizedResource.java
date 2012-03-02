@@ -6,12 +6,12 @@ package benchmark;
  */
 public class SynchronizedResource implements Resource {
 
-    public synchronized void read() {
-
+    public synchronized void read(Long readTime) throws InterruptedException {
+            Thread.sleep(readTime);
     }
 
-    public synchronized void write() {
-
+    public synchronized void write(Long writeTime) throws InterruptedException {
+            Thread.sleep(writeTime);
     }
 
 }

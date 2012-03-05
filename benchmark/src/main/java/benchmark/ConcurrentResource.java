@@ -16,8 +16,9 @@ public class ConcurrentResource implements Resource {
             Thread.sleep(readTime);
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        } finally {
+            lock.readLock().unlock();
         }
-        lock.readLock().unlock();
     }
 
     public void write(long writeTime) {
@@ -26,7 +27,8 @@ public class ConcurrentResource implements Resource {
             Thread.sleep(writeTime);
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        } finally {
+            lock.writeLock().unlock();
         }
-        lock.writeLock().unlock();
     }
 }

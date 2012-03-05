@@ -10,22 +10,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ConcurrentResource implements Resource {
     private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public void read(Long readTime) {
+    public void read(long readTime) {
         lock.readLock().lock();
         try {
             Thread.sleep(readTime);
         } catch (InterruptedException ignored) {
-
+            Thread.currentThread().interrupt();
         }
         lock.readLock().unlock();
     }
 
-    public void write(Long writeTime) {
+    public void write(long writeTime) {
         lock.writeLock().lock();
         try {
             Thread.sleep(writeTime);
         } catch (InterruptedException ignored) {
-
+            Thread.currentThread().interrupt();
         }
         lock.writeLock().unlock();
     }

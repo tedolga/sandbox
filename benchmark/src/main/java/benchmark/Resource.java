@@ -6,8 +6,8 @@ package benchmark;
  */
 public interface Resource {
 
-    public void read(long readTime);
+    public void read();
 
-    public void write(long writeTime);
+    public void write();
 
 }

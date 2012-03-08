@@ -1,7 +1,6 @@
 package benchmark;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Tedikova O.
@@ -11,7 +10,7 @@ public class TestResult {
     private String testName = "";
     private int threadCount;
     private long timeout;
-    private List<Long> durations = new ArrayList<Long>();
+    private Iterable<Long> durations = new ArrayList<Long>();
     private long totalTime;
 
     public TestResult(String testName) {
@@ -44,7 +43,7 @@ public class TestResult {
         this.threadCount = threadCount;
     }
 
-    public void setDurations(List<Long> durations) {
+    public void setDurations(Iterable<Long> durations) {
         this.durations = durations;
     }
 

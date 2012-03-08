@@ -7,10 +7,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author O. Tedikova
  * @version 1.0
  */
-public class ConcurrentResource implements Resource {
+public class ConcurrentResource extends AbstractResource {
+
     private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public void read(long readTime) {
+    public ConcurrentResource(long readTime, long writeTime) {
+        super(readTime, writeTime);
+    }
+
+    public void read() {
         lock.readLock().lock();
         try {
             Thread.sleep(readTime);
@@ -21,7 +26,7 @@ public class ConcurrentResource implements Resource {
         }
     }
 
-    public void write(long writeTime) {
+    public void write() {
         lock.writeLock().lock();
         try {
             Thread.sleep(writeTime);

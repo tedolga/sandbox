@@ -4,9 +4,13 @@ package benchmark;
  * @author O. Tedikova
  * @version 1.0
  */
-public class SynchronizedResource implements Resource {
+public class SynchronizedResource extends AbstractResource {
 
-    public synchronized void read(long readTime){
+    public SynchronizedResource(long readTime, long writeTime) {
+        super(readTime, writeTime);
+    }
+
+    public synchronized void read() {
         try {
             Thread.sleep(readTime);
         } catch (InterruptedException e) {
@@ -14,7 +18,7 @@ public class SynchronizedResource implements Resource {
         }
     }
 
-    public synchronized void write(long writeTime) {
+    public synchronized void write() {
         try {
             Thread.sleep(writeTime);
         } catch (InterruptedException e) {

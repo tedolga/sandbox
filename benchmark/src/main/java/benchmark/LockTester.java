@@ -1,9 +1,12 @@
 package benchmark;
 
-import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author O. Tedikova
@@ -11,115 +14,71 @@ import java.util.concurrent.*;
  */
 public class LockTester {
 
-    private int threadCount;
-
-    public static void main(String[] args) {
-        final Resource syncResource = new SynchronizedResource();
-        final Resource concurrentResource = new ConcurrentResource();
-        LockTester tester = new LockTester();
-        tester.setThreadCount(10);
-        TestResult syncReadersTest = tester.testReaders(syncResource, 1000, "Sync resource reading");
-        TestResult concurrentReadersTest = tester.testReaders(concurrentResource, 1000, "Concurrent resource reading");
-        TestResult syncWritersTest = tester.testWriters(syncResource, 1000, "Sync resource writing");
-        TestResult concurrentWritersTest = tester.testWriters(concurrentResource, 1000, "Concurrent resource writing");
-        System.out.println(syncReadersTest.toString());
-        System.out.println("---------------------------------------------------------------");
-        System.out.println(concurrentReadersTest.toString());
-        System.out.println("---------------------------------------------------------------");
-        System.out.println(syncWritersTest.toString());
-        System.out.println("---------------------------------------------------------------");
-        System.out.println(concurrentWritersTest.toString());
-    }
-
-    public void setThreadCount(int threadCount) {
-        this.threadCount = threadCount;
-    }
-
-    private static class Reader implements Callable {
-        private Resource resource;
-        private long readingTime;
-
-        public Reader(Resource resource, long readingTime) {
-            this.resource = resource;
-            this.readingTime = readingTime;
-        }
-
-        public Long call() throws Exception {
-            long startTime = System.currentTimeMillis();
-            resource.read(readingTime);
-            long endTime = System.currentTimeMillis();
-            return endTime - startTime;
-        }
-    }
-
-    private static class Writer implements Callable {
-        private Resource resource;
-        private long operationTime;
-
-        public Writer(Resource resource, long readingTime) {
-            this.resource = resource;
-            this.operationTime = readingTime;
-        }
-
-        public Long call() throws Exception {
-            long startTime = System.currentTimeMillis();
-            resource.write(operationTime);
-            long endTime = System.currentTimeMillis();
-            return endTime - startTime;
-        }
-    }
-
-    private List<Callable<Long>> initializeReaders(Resource resource, long operationTime) {
+    public List<Callable<Long>> initializeReaders(final Resource resource, int readersCount) {
         List<Callable<Long>> readersList = new LinkedList<Callable<Long>>();
-        for (int i = 0; i < threadCount; i++) {
-            readersList.add(new Reader(resource, operationTime));
+        for (int i = 0; i < readersCount; i++) {
+            readersList.add(new Actor() {
+                @Override
+                public void doSomething() {
+                    resource.read();
+                }
+            });
         }
         return readersList;
     }
 
-    private List<Callable<Long>> initializeWriters(Resource resource, long operationTime) {
+    public List<Callable<Long>> initializeWriters(final Resource resource, int writersCount) {
         List<Callable<Long>> readersList = new LinkedList<Callable<Long>>();
-        for (int i = 0; i < threadCount; i++) {
-            readersList.add(new Writer(resource, operationTime));
+        for (int i = 0; i < writersCount; i++) {
+            readersList.add(new Actor() {
+                @Override
+                public void doSomething() {
+                    resource.write();
+                }
+            });
         }
         return readersList;
     }
 
-    public TestResult testReaders(Resource resource, long readingTime, String testName) {
-        List<Callable<Long>> readers = initializeReaders(resource, readingTime);
-        return testLockTime(readingTime, testName, readers);
+    public List<Callable<Long>> initializeWritersAndReaders(final Resource resource, int writersCount, int readersCount) {
+        List<Callable<Long>> actorsList = new LinkedList<Callable<Long>>();
+        for (int i = 0; i < writersCount; i++) {
+            actorsList.add(new Actor() {
+                @Override
+                public void doSomething() {
+                    resource.write();
+                }
+            });
+        }
+        for (int i = 0; i < readersCount; i++) {
+            actorsList.add(new Actor() {
+                @Override
+                public void doSomething() {
+                    resource.read();
+                }
+            });
+        }
+        return actorsList;
     }
 
-    public TestResult testWriters(Resource resource, long writingTime, String testName) {
-        List<Callable<Long>> readers = initializeWriters(resource, writingTime);
-        return testLockTime(writingTime, testName, readers);
-    }
-
-    private TestResult testLockTime(long operationTime, String testName, List<Callable<Long>> tasks) {
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        List<Future<Long>> results = new LinkedList<Future<Long>>();
+    public TestResult testLockTime(String testName, List<Callable<Long>> tasks) throws Exception {
+        ExecutorService executorService = Executors.newFixedThreadPool(tasks.size());
+        TestResult result;
         try {
-            results = executorService.invokeAll(tasks);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        TestResult result = new TestResult(testName);
-        result.setThreadCount(threadCount);
-        result.setTimeout(operationTime);
-        List<Long> durations = new ArrayList<Long>();
-        long totalTime = 0;
-        for (Future<Long> next : results) {
-            try {
-                durations.add(next.get());
+            List<Future<Long>> results = executorService.invokeAll(tasks);
+            result = new TestResult(testName);
+            result.setThreadCount(tasks.size());
+            Deque<Long> durations = new LinkedList<Long>();
+            long totalTime = 0;
+            for (Future<Long> next : results) {
+                durations.addLast(next.get());
                 totalTime += next.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
+            result.setDurations(durations);
+            result.setTotalTime(totalTime);
+        } finally {
+            executorService.shutdown();
         }
-        result.setDurations(durations);
-        result.setTotalTime(totalTime);
         return result;
     }
 
